@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from PIL import Image, ImageSequence
 import sys
 import os
+import webcolors
 
 # Python 2 and 3 support
 # TODO: Proper images2gif version that supports both Py 2 and Py 3 (mostly handling binary data)
@@ -38,6 +39,30 @@ def overlay_effect(color, overlay):
     else:
         return overlay - 133 + color
 
+def get_color_name(RGB):
+    try:  # Convert RGB to hex and attempt to find name
+        hex = webcolors.rgb_to_hex(RGB)
+        return webcolors.hex_to_name(hex)
+    except ValueError:  # If not exact match, find the closet
+        return closest_color(RGB)
+
+
+def closest_color(RGB):
+    min_distance = float('inf')
+    closest_name = None
+
+    # Loop through the CSS3 color names
+    for hex_code, color_name in webcolors._get_hex_to_name_map('css3').items():
+        r, g, b = webcolors.hex_to_rgb(hex_code)
+        # Calculate squared Euclidean distance
+        distance = (r - RGB[0]) ** 2 + (g - RGB[1]) ** 2 + (b - RGB[2]) ** 2
+
+        if distance < min_distance:
+            min_distance = distance
+            closest_name = color_name
+
+    return closest_name
+
 def make_lego_image(thumbnail_image, brick_image):
     '''Create a lego version of an image from an image'''
     base_width, base_height = thumbnail_image.size
@@ -45,14 +70,28 @@ def make_lego_image(thumbnail_image, brick_image):
 
     rgb_image = thumbnail_image.convert('RGB')
 
+    brick_counter = 0
+    colors = {}
+
     lego_image = Image.new("RGB", (base_width * brick_width,
                                    base_height * brick_height), "white")
 
     for brick_x in range(base_width):
         for brick_y in range(base_height):
             color = rgb_image.getpixel((brick_x, brick_y))
+            color_name = get_color_name(color)
+            if color_name in colors:
+                colors[color_name] +=1
+            else:
+                colors[color_name] = 1
             lego_image.paste(apply_color_overlay(brick_image, color),
                              (brick_x * brick_width, brick_y * brick_height))
+            brick_counter += 1
+
+    print(f"Total Number of Bricks: {brick_counter}")
+    print("Color Stats")
+    for colors, amount in colors.items():
+        print(f"--{colors}: {amount}")
     return lego_image
 
 
