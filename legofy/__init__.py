@@ -40,6 +40,7 @@ def overlay_effect(color, overlay):
         return overlay - 133 + color
 
 def get_color_name(RGB):
+    '''Function to get color name from RGB tuple'''
     try:  # Convert RGB to hex and attempt to find name
         hex = webcolors.rgb_to_hex(RGB)
         return webcolors.hex_to_name(hex)
@@ -48,13 +49,14 @@ def get_color_name(RGB):
 
 
 def closest_color(RGB):
+    '''Function to get closest color to RGB tuple'''
     min_distance = float('inf')
     closest_name = None
 
     # Loop through the CSS3 color names
     for hex_code, color_name in webcolors._get_hex_to_name_map('css3').items():
         r, g, b = webcolors.hex_to_rgb(hex_code)
-        # Calculate squared Euclidean distance
+        # Calculate distance with Euclidian distance formula
         distance = (r - RGB[0]) ** 2 + (g - RGB[1]) ** 2 + (b - RGB[2]) ** 2
 
         if distance < min_distance:
